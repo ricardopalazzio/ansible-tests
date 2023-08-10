@@ -20,6 +20,11 @@
         name: sysbench
         state: present
 
+    - name: Install geekbench
+      command: wget https://cdn.geekbench.com/Geekbench-6.1.0-Linux.tar.gz;tar -xvzf Geekbench-6.1.0-Linux.tar.gz;cd Geekbench-6.1.0-Linux
+      register: install geekbench
+      changed_when: false
+
     - name: Start Docker service
       service:
         name: docker
@@ -54,6 +59,9 @@
       changed_when: false     
 
 
+    - name: Run geekbench
+      command: cd ~/; cd Geekbench-6.1.0-Linux;./geekbench6
+      changed_when: false    
 
 
     # - name: Display CPU 1th test result
