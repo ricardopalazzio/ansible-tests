@@ -1,65 +1,118 @@
 ---
-- name: Install Docker and Run Sysbench
+- name: Install Sysbench and Geekbench
   hosts: all
   become: yes
-  become_method: sudo
-  
+
   tasks:
     - name: Update apt cache
       apt:
-        update_cache: yes
-      changed_when: false
-    - name: Install Docker
+       update_cache: yes
+    - name: Install required packages
       apt:
-        name: docker.io
+        name: ['sysbench']
         state: present
 
+- name: Run Benchmarks
+  hosts: all
+  gather_facts: false
+  become: yes
 
-    - name: Install sysbench
-      apt:
-        name: sysbench
-        state: present
+  tasks:
 
-    - name: Start Docker service
-      service:
-        name: docker
-        state: started
-
-    - name: Run Sysbench CPU test 1
+    - name: Run Sysbench CPU tests with 1 thread
       command: sysbench cpu --cpu-max-prime=20000 --threads=1 run
-      register: cpu_test_result
+      register: cpu_1_thread_result
       changed_when: false
 
-    - name: Run Sysbench CPU test 4
-      command: sysbench cpu --cpu-max-prime=20000 --threads=1 run
-      register: cpu_test_result
+    - name: Run Sysbench CPU tests with 2 threads
+      command: sysbench cpu --cpu-max-prime=20000 --threads=2 run
+      register: cpu_2_threads_result
       changed_when: false
 
-    - name: Run Sysbench memory test 1
-      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=1 run
-      register: memory_test_result
-      changed_when: false
-
-    - name: Run Sysbench memory test 4
-      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=4 run
-      register: memory_test_result
-      changed_when: false
-
-    - name: Run calc increment  test 1
-      command: docker run --rm jojje/cloud-cpu-bench -t1
+    - name: Run Sysbench CPU tests with 4 threads
+      command: sysbench cpu --cpu-max-prime=20000 --threads=4 run
+      register: cpu_4_threads_result
       changed_when: false  
 
-    - name: Run calc increment  test 4
-      command: docker run --rm jojje/cloud-cpu-bench -t4
+    - name: Run Sysbench CPU tests with 8 threads
+      command: sysbench cpu --cpu-max-prime=20000 --threads=8 run
+      register: cpu_8_threads_result
+      changed_when: false  
+
+
+    - name: Run Sysbench memory tests with 1 thread
+      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=1 run
+      register: memory_1_thread_result
+      changed_when: false
+
+    - name: Run Sysbench memory tests with 2 threads
+      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=2 run
+      register: memory_2_threads_result
+      changed_when: false
+
+    - name: Run Sysbench memory tests with 4 threads
+      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=4 run
+      register: memory_4_threads_result
       changed_when: false     
 
+    - name: Run Sysbench memory tests with 8 threads
+      command: sysbench memory --memory-block-size=1M --memory-total-size=6G --threads=8 run
+      register: memory_8_threads_result
+      changed_when: false             
+
+    # - name: Run Sysbench fileio tests with 1 thread
+    #   command: sysbench fileio --file-total-size=1G --file-test-mode=rndrw --time=60 --max-requests=0 run
+    #   register: fileio_1_thread_result
+    #   changed_when: false
+
+    # - name: Run Sysbench fileio tests with 4 threads
+    #   command: sysbench fileio --file-total-size=1G --file-test-mode=rndrw --time=60 --max-requests=0 run
+    #   register: fileio_4_threads_result
+    #   changed_when: false
+
+    # - name: Run Geekbench
+    #   command: /path/to/geekbench
+    #   register: geekbench_result
+    #   changed_when: false
 
 
-
-    # - name: Display CPU 1th test result
-    #   debug:
-    #     var: cpu_test_result.stdout
-
-    # - name: Display memory 1th test result
-    #   debug:
-    #     var: memory_test_result.stdout
+- name: Create log file for benchmark results
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Create a file
+      file:
+        path: results/{{ inventory_hostname }}.log
+        state: touch
+      delegate_to: localhost   
+        
+    - name: Create log file
+      lineinfile:
+        line: "{{ item.stdout }}"
+        dest: "results/{{ inventory_hostname }}.log"
+      delegate_to: localhost    
+      loop:
+        - "{{ cpu_1_thread_result }}"
+        - "{{ cpu_2_threads_result }}"
+        - "{{ cpu_4_threads_result }}"
+        - "{{ cpu_8_threads_result }}"
+        - "{{ memory_1_thread_result }}"
+        - "{{ memory_2_threads_result }}"
+        - "{{ memory_4_threads_result }}"
+        - "{{ memory_8_threads_result }}"
+# - name: Save benchmark results to separate logs
+#   tasks:
+#   - name: saving ... 
+#     copy:
+#       dest: "{{ inventory_hostname }}.log"
+#       content: "{{ item.stdout }}"
+#     delegate_to: localhost
+#     loop:
+#       - "{{ cpu_1_thread_result }}"
+#       - "{{ cpu_4_threads_result }}"
+#       - "{{ memory_1_thread_result }}"
+#       - "{{ memory_4_threads_result }}"
+#       # - "{{ fileio_1_thread_result }}"
+#       # - "{{ fileio_4_threads_result }}"
+#       # - "{{ geekbench_result }}"  
+      

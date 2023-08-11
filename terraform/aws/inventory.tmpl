@@ -1,4 +1,4 @@
 [all]
-%{ for ip in ip_addrs ~}
-${ip} ansible_user=${user}
+%{ for instance in instances ~}
+${instance.name} ansible_host=${instance.ip} ansible_user=${user}
 %{ endfor ~}

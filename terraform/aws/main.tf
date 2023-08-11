@@ -52,7 +52,7 @@ resource "aws_key_pair" "my_keypair" {
 
 resource "aws_instance" "ec2_m5_debian" {
   ami             = var.ami_id
-  instance_type   = "m6i.xlarge"
+  instance_type   = "m5.2xlarge"
   key_name        = aws_key_pair.my_keypair.key_name
   security_groups = [aws_security_group.allow_ssh.name]
   root_block_device {
@@ -65,17 +65,138 @@ resource "aws_instance" "ec2_m5_debian" {
   }
 }
 
-output "instance_ips" {
-  value = [
-    aws_instance.ec2_m5_debian.public_ip
-  ]
+resource "aws_instance" "ec2_m5a_debian" {
+  ami             = var.ami_id
+  instance_type   = "m5a.2xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-m5a"
+  }
 }
 
+resource "aws_instance" "ec2_m6i_debian" {
+  ami             = var.ami_id
+  instance_type   = "m6i.2xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-m6i"
+  }
+}
+
+resource "aws_instance" "ec2_m6a_debian" {
+  ami             = var.ami_id
+  instance_type   = "m6a.2xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-m6a"
+  }
+}
+
+resource "aws_instance" "ec2_c6a_debian" {
+  ami             = var.ami_id
+  instance_type   = "c6a.xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-c6a"
+  }
+}
+
+resource "aws_instance" "ec2_c6i_debian" {
+  ami             = var.ami_id
+  instance_type   = "c6i.xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-c6i"
+  }
+}
+
+
+resource "aws_instance" "ec2_c6a4_debian" {
+  ami             = var.ami_id
+  instance_type   = "c6a.4xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-c6a4"
+  }
+}
+
+resource "aws_instance" "ec2_c6i4_debian" {
+  ami             = var.ami_id
+  instance_type   = "c6i.4xlarge"
+  key_name        = aws_key_pair.my_keypair.key_name
+  security_groups = [aws_security_group.allow_ssh.name]
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 30
+  }
+
+  tags = {
+    Name  = "benchmark-c6i4"
+  }
+}
+
+output "instance_ips" {
+  value = [
+    aws_instance.ec2_m5_debian.public_ip,
+    aws_instance.ec2_m5a_debian.public_ip,
+    aws_instance.ec2_m6i_debian.public_ip,
+    aws_instance.ec2_m6a_debian.public_ip,
+    aws_instance.ec2_c6i_debian.public_ip,
+    aws_instance.ec2_c6a_debian.public_ip,
+    aws_instance.ec2_c6i4_debian.public_ip,
+    aws_instance.ec2_c6a4_debian.public_ip
+  ]
+}
  resource "local_file" "ansible_inventory" {
   content = templatefile("inventory.tmpl",
     {
       user = "admin",
-      ip_addrs = [aws_instance.ec2_m5_debian.public_ip]
+      instances = [
+        { name = "ec2_m5_debian", ip = aws_instance.ec2_m5_debian.public_ip },
+        { name = "ec2_m5a_debian", ip = aws_instance.ec2_m5_debian.public_ip },
+        { name = "ec2_m6i_debian", ip = aws_instance.ec2_m6i_debian.public_ip },
+        { name = "ec2_m6a_debian", ip = aws_instance.ec2_m6a_debian.public_ip },
+        { name = "ec2_c6i_debian", ip = aws_instance.ec2_c6i_debian.public_ip },
+        { name = "ec2_c6a_debian", ip = aws_instance.ec2_c6a_debian.public_ip },
+        { name = "ec2_c6i4_debian", ip = aws_instance.ec2_c6i4_debian.public_ip },
+        { name = "ec2_c6a4_debian", ip = aws_instance.ec2_c6a4_debian.public_ip }
+      ]
     }
   )
   filename = "hosts"
